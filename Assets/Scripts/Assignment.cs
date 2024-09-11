@@ -72,35 +72,47 @@ public partial class PartyCharacter
 
 static public class AssignmentPart1
 {
+    const int PartyCharacterName = 1;
+    const int EquipmentName = 2;
 
     static public void SavePartyButtonPressed()
     {
         StreamWriter sw = new StreamWriter("PartySaveData.txt");
-        sw.WriteLine("name1");
-        sw.WriteLine("name1");
-        sw.WriteLine("name1");
-        sw.WriteLine("name1");
-        sw.WriteLine("name1");
 
+        foreach (PartyCharacter pc in GameContent.partyCharacters)
+        {
+            sw.WriteLine(PartyCharacterName + "," + pc.classID + "," + pc.health + "," + pc.mana + "," + pc.strength + "," + pc.agility + "," + pc.wisdom);
+
+            foreach (int e in pc.equipment)
+            {
+                sw.WriteLine(EquipmentName + "," + e);
+            }
+        }
         sw.Close();
-        //foreach (PartyCharacter pc in GameContent.partyCharacters)
-        //{
-        //    Debug.Log("PC class id == " + pc.classID);
-        //}
     }
 
     static public void LoadPartyButtonPressed()
     {
-        GameContent.partyCharacters.Clear();
+        string line = "";
+        StreamReader sr = new StreamReader("PartySaveData.txt");
+        {
+            while (!sr.EndOfStream)
+            {
+                line = sr.ReadLine();
+                Debug.Log(line);
+            }
+        }
 
-        PartyCharacter pc = new PartyCharacter(1, 10, 10, 10, 10, 10);
-        GameContent.partyCharacters.AddLast(pc);
-        pc = new PartyCharacter(2, 11, 11, 11, 11, 11);
-        GameContent.partyCharacters.AddLast(pc);
-        pc = new PartyCharacter(3, 12, 12, 12, 12, 12);
-        GameContent.partyCharacters.AddLast(pc);
+        //GameContent.partyCharacters.Clear();
 
-        GameContent.RefreshUI();
+        //PartyCharacter pc = new PartyCharacter(1, 10, 10, 10, 10, 10);
+        //GameContent.partyCharacters.AddLast(pc);
+        //pc = new PartyCharacter(2, 11, 11, 11, 11, 11);
+        //GameContent.partyCharacters.AddLast(pc);
+        //pc = new PartyCharacter(3, 12, 12, 12, 12, 12);
+        //GameContent.partyCharacters.AddLast(pc);
+
+        //GameContent.RefreshUI();
     }
 
 }

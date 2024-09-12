@@ -8,6 +8,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using System.IO;
+using UnityEditor.VersionControl;
 
 #region Assignment Instructions
 
@@ -73,48 +74,73 @@ public partial class PartyCharacter
 static public class AssignmentPart1
 {
     const int PartyCharacterName = 1;
-    const int EquipmentName = 2;
+    const int EquipmentSignifier = 2;
+    const char SepChar = ',';
 
     static public void SavePartyButtonPressed()
     {
+        LinkedList<string> serialzedPartyCharacters = SerializePartyCharcters();
+
         StreamWriter sw = new StreamWriter("PartySaveData.txt");
 
-        foreach (PartyCharacter pc in GameContent.partyCharacters)
-        {
-            sw.WriteLine(PartyCharacterName + "," + pc.classID + "," + pc.health + "," + pc.mana + "," + pc.strength + "," + pc.agility + "," + pc.wisdom);
+        foreach (string line in serialzedPartyCharacters)
+            sw.WriteLine(line);
 
-            foreach (int e in pc.equipment)
-            {
-                sw.WriteLine(EquipmentName + "," + e);
-            }
-        }
         sw.Close();
     }
 
     static public void LoadPartyButtonPressed()
     {
+        GameContent.partyCharacters.Clear();
+
         string line = "";
         StreamReader sr = new StreamReader("PartySaveData.txt");
         {
+            PartyCharacter pc = null;
+
             while (!sr.EndOfStream)
             {
                 line = sr.ReadLine();
-                Debug.Log(line);
+
+                string[] csv = line.Split(SepChar);
+                int signifier = int.Parse(csv[0]);
+
+                if (signifier == PartyCharacterName)
+                {
+                    pc = new PartyCharacter(int.Parse(csv[1]), int.Parse(csv[2]), int.Parse(csv[3]), int.Parse(csv[4]), int.Parse(csv[5]), int.Parse(csv[6]));
+                    GameContent.partyCharacters.AddLast(pc);
+                }
+                else if (signifier == EquipmentSignifier)
+                {
+                    pc.equipment.AddLast(int.Parse(csv[1]));
+                }
             }
         }
 
-        //GameContent.partyCharacters.Clear();
+        GameContent.RefreshUI();
 
-        //PartyCharacter pc = new PartyCharacter(1, 10, 10, 10, 10, 10);
-        //GameContent.partyCharacters.AddLast(pc);
-        //pc = new PartyCharacter(2, 11, 11, 11, 11, 11);
-        //GameContent.partyCharacters.AddLast(pc);
-        //pc = new PartyCharacter(3, 12, 12, 12, 12, 12);
-        //GameContent.partyCharacters.AddLast(pc);
-
-        //GameContent.RefreshUI();
+        sr.Close();
     }
 
+    static private LinkedList<string> SerializePartyCharcters()
+    {
+        LinkedList<string> serialzedPartyCharacters = new LinkedList<string>();
+
+        foreach (PartyCharacter pc in GameContent.partyCharacters)
+        {
+            serialzedPartyCharacters.AddLast(PartyCharacterName.ToString() + SepChar
+                + pc.classID + SepChar + pc.health + SepChar
+                + pc.mana + SepChar + pc.strength + SepChar
+                + pc.agility + SepChar + pc.wisdom);
+
+            foreach (int e in pc.equipment)
+            {
+                serialzedPartyCharacters.AddLast(EquipmentSignifier.ToString() + SepChar + e);
+            }
+        }
+
+        return serialzedPartyCharacters;
+    }
 }
 
 

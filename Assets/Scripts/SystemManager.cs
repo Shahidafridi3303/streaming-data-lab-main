@@ -112,7 +112,6 @@ public class SystemManager : MonoBehaviour
 
 
             //loadPartyDropDown.GetComponent<Dropdown>().setl
-
             //             int menuIndex = loadPartyDropDown.GetComponent<Dropdown>().value;
             // List<Dropdown.OptionData> menuOptions = loadPartyDropDown.GetComponent<Dropdown>().options;
             // string value = menuOptions[menuIndex].text;

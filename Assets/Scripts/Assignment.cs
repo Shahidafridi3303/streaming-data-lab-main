@@ -4,11 +4,9 @@ This RPG data streaming assignment was created by Fernando Restituto with
 pixel RPG characters created by Sean Browning.
 */
 
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using System.IO;
-using UnityEditor.VersionControl;
 
 #region Assignment Instructions
 
@@ -68,78 +66,121 @@ public partial class PartyCharacter
 
 #endregion
 
-
 #region Assignment Part 1
+
+static public class SaveDataSignifiers
+{
+    public const int PartyCharacter = 1;
+    public const int Equipment = 2;
+}
 
 static public class AssignmentPart1
 {
-    const int PartyCharacterName = 1;
-    const int EquipmentSignifier = 2;
+    //For creation process, see: https://youtu.be/VVULsmtWco8?si=4MFPVt6ZPzK9Wrna
+
     const char SepChar = ',';
+    const string SaveFileName = "PartySaveData.txt";
 
     static public void SavePartyButtonPressed()
     {
-        LinkedList<string> serialzedPartyCharacters = SerializePartyCharcters();
+        LinkedList<string> serializedSaveData = SerializeSaveData();
 
-        StreamWriter sw = new StreamWriter("PartySaveData.txt");
+        #region Save Data To HD
 
-        foreach (string line in serialzedPartyCharacters)
+        StreamWriter sw = new StreamWriter(SaveFileName);
+
+        foreach (string line in serializedSaveData)
             sw.WriteLine(line);
 
         sw.Close();
+
+        #endregion
     }
 
     static public void LoadPartyButtonPressed()
     {
         GameContent.partyCharacters.Clear();
 
-        string line = "";
-        StreamReader sr = new StreamReader("PartySaveData.txt");
+        #region Load Data From HD
+
+        LinkedList<string> serializedData = new LinkedList<string>();
+        StreamReader sr = new StreamReader(SaveFileName);
+
+        while (!sr.EndOfStream)
         {
-            PartyCharacter pc = null;
-
-            while (!sr.EndOfStream)
-            {
-                line = sr.ReadLine();
-
-                string[] csv = line.Split(SepChar);
-                int signifier = int.Parse(csv[0]);
-
-                if (signifier == PartyCharacterName)
-                {
-                    pc = new PartyCharacter(int.Parse(csv[1]), int.Parse(csv[2]), int.Parse(csv[3]), int.Parse(csv[4]), int.Parse(csv[5]), int.Parse(csv[6]));
-                    GameContent.partyCharacters.AddLast(pc);
-                }
-                else if (signifier == EquipmentSignifier)
-                {
-                    pc.equipment.AddLast(int.Parse(csv[1]));
-                }
-            }
+            string line = sr.ReadLine();
+            serializedData.AddLast(line);
         }
 
-        GameContent.RefreshUI();
-
         sr.Close();
+
+        #endregion
+
+        DeserializeSaveData(serializedData);
+
+        GameContent.RefreshUI();
     }
 
-    static private LinkedList<string> SerializePartyCharcters()
+    static private LinkedList<string> SerializeSaveData()
     {
-        LinkedList<string> serialzedPartyCharacters = new LinkedList<string>();
+        LinkedList<string> serializedData = new LinkedList<string>();
 
         foreach (PartyCharacter pc in GameContent.partyCharacters)
         {
-            serialzedPartyCharacters.AddLast(PartyCharacterName.ToString() + SepChar
-                + pc.classID + SepChar + pc.health + SepChar
-                + pc.mana + SepChar + pc.strength + SepChar
-                + pc.agility + SepChar + pc.wisdom);
+            string concatenatedString = Concatenate(SaveDataSignifiers.PartyCharacter.ToString(),
+                pc.classID.ToString(), pc.health.ToString(),
+                pc.mana.ToString(), pc.strength.ToString(),
+                pc.agility.ToString(), pc.wisdom.ToString());
+
+            serializedData.AddLast(concatenatedString);
 
             foreach (int e in pc.equipment)
             {
-                serialzedPartyCharacters.AddLast(EquipmentSignifier.ToString() + SepChar + e);
+                concatenatedString = Concatenate(SaveDataSignifiers.Equipment.ToString(), e.ToString());
+                serializedData.AddLast(concatenatedString);
             }
         }
 
-        return serialzedPartyCharacters;
+        return serializedData;
+    }
+
+    static private void DeserializeSaveData(LinkedList<string> serializedData)
+    {
+        PartyCharacter pc = null;
+
+        foreach (string line in serializedData)
+        {
+            string[] csv = line.Split(SepChar);
+            int signifier = int.Parse(csv[0]);
+
+            if (signifier == SaveDataSignifiers.PartyCharacter)
+            {
+                pc = new PartyCharacter(int.Parse(csv[1]),
+                    int.Parse(csv[2]), int.Parse(csv[3]),
+                    int.Parse(csv[4]), int.Parse(csv[5]),
+                    int.Parse(csv[6]));
+
+                GameContent.partyCharacters.AddLast(pc);
+            }
+            else if (signifier == SaveDataSignifiers.Equipment)
+            {
+                pc.equipment.AddLast(int.Parse(csv[1]));
+            }
+        }
+    }
+
+    static private string Concatenate(params string[] stringsToJoin)
+    {
+        string joinedString = "";
+
+        foreach (string s in stringsToJoin)
+        {
+            if (joinedString != "")
+                joinedString += SepChar;
+            joinedString += s;
+        }
+
+        return joinedString;
     }
 }
 

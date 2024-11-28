@@ -234,17 +234,25 @@ Good luck, journey well.
 
 static public class AssignmentPart2
 {
-
     static List<string> listOfPartyNames;
+    private static string saveDirectoryPath = "SavedParties/";
 
     static public void GameStart()
     {
         listOfPartyNames = new List<string>();
-        listOfPartyNames.Add("sample 1");
-        listOfPartyNames.Add("sample 2");
-        listOfPartyNames.Add("sample 3");
+
+        if (!Directory.Exists(saveDirectoryPath))
+        {
+            Directory.CreateDirectory(saveDirectoryPath);
+        }
+
+        foreach (string filePath in Directory.GetFiles(saveDirectoryPath, "*.txt"))
+        {
+            listOfPartyNames.Add(Path.GetFileNameWithoutExtension(filePath));
+        }
 
         GameContent.RefreshUI();
+        Debug.Log("Loaded existing party names.");
     }
 
     static public List<string> GetListOfPartyNames()
@@ -259,6 +267,50 @@ static public class AssignmentPart2
 
     static public void SavePartyButtonPressed()
     {
+        string partyName = GameContent.GetPartyNameFromInput()?.Trim();
+
+        if (string.IsNullOrEmpty(partyName))
+        {
+            Debug.LogError("Party name cannot be empty!");
+            return;
+        }
+
+        // Replace invalid characters
+        partyName = string.Join("_", partyName.Split(Path.GetInvalidFileNameChars()));
+
+        string filePath = Path.Combine(saveDirectoryPath, $"{partyName}.txt");
+
+        // Handle duplicate names
+        if (listOfPartyNames.Contains(partyName))
+        {
+            partyName = $"{partyName}_{listOfPartyNames.Count}";
+            filePath = Path.Combine(saveDirectoryPath, $"{partyName}.txt");
+        }
+
+        // Backup existing file
+        if (File.Exists(filePath))
+        {
+            string backupFile = filePath + ".bak";
+            File.Copy(filePath, backupFile, true);
+            Debug.Log($"Backup created for existing party: {partyName}");
+        }
+
+        using (StreamWriter writer = new StreamWriter(filePath))
+        {
+            foreach (PartyCharacter pc in GameContent.partyCharacters)
+            {
+                writer.WriteLine($"{pc.classID},{pc.health},{pc.mana},{pc.strength},{pc.agility},{pc.wisdom}");
+                writer.WriteLine(string.Join(" ", pc.equipment));
+            }
+        }
+
+        if (!listOfPartyNames.Contains(partyName))
+        {
+            listOfPartyNames.Add(partyName);
+            listOfPartyNames.Sort();
+        }
+
+        Debug.Log($"Party '{partyName}' saved successfully!");
         GameContent.RefreshUI();
     }
 
